@@ -1,0 +1,32 @@
+set_indicator:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: ring_keypad_gen1
+    value:
+      required: true
+      example: 3
+      selector:
+        number:
+          min: 0
+          max: 63
+          mode: box
+
+chime:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: ring_keypad_gen1
+    value:
+      required: false
+      default: 15
+      example: 15
+      selector:
+        number:
+          min: 0
+          max: 63
+          mode: box

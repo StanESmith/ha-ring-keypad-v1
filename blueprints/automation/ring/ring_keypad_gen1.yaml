@@ -1,0 +1,199 @@
+blueprint:
+  name: Ring Alarm Keypad (1st Gen) for Alarmo / Alarm Panels
+  description: >
+    Use a Ring Alarm Keypad (1st Gen, 4AK1S7 / 4AK1E9) paired to Z-Wave JS as a
+    keypad for any alarm_control_panel (Alarmo, Manual, etc.).
+
+
+    **Input:** Home / Away / Disarm buttons with PIN. Handles both ways the
+    Gen 1 sends codes: attached to the mode button, or as a separate
+    Enter/Cached-keys event just before it.
+
+
+    **Feedback:** sends a Z-Wave Indicator (CC 0x87, v1) value to the keypad
+    whenever the alarm state changes, and again when Home Assistant starts.
+    Values were mapped on a US 4AK1S7 (firmware 2.16): 3 = Disarmed (bottom
+    shield blue), 1 = Armed Home (right shield), 2 = Armed Away (left shield),
+    4 = Triggered (red ring + siren). Adding 32 to a value shows the same
+    lights with no sound; adding 16 changes the sound. Values 64-255 are
+    ignored by the keypad. Set any value to -1 to skip that state.
+
+
+    Requires a Text helper (mode: password, max length 10) to briefly buffer
+    the entered code.
+  domain: automation
+  source_url: https://example.com/REPLACE-with-your-repo/ring_keypad_gen1_blueprint.yaml
+  input:
+    keypad:
+      name: Ring Keypad (1st Gen)
+      selector:
+        device:
+          filter:
+            - integration: zwave_js
+              manufacturer: Ring
+    alarm_panel:
+      name: Alarm panel
+      selector:
+        entity:
+          filter:
+            - domain: alarm_control_panel
+    code_helper:
+      name: Code buffer helper
+      description: A Text helper in password mode, max length 10.
+      selector:
+        entity:
+          filter:
+            - domain: input_text
+    code_max_age:
+      name: Code buffer timeout
+      description: Seconds a code entered before a mode button stays valid.
+      default: 10
+      selector:
+        number: { min: 2, max: 30, unit_of_measurement: s }
+    options:
+      name: Sound options
+      input:
+        silent_status:
+          name: Silent status lights
+          description: >
+            Show Disarmed / Home / Away / Arming / Pending lights without any
+            keypad sound (adds 32 to those values). Does not affect Triggered.
+          default: false
+          selector:
+            boolean: {}
+        triggered_sound:
+          name: Alarm sound when triggered
+          default: "4"
+          selector:
+            select:
+              custom_value: true
+              options:
+                - { label: "Siren – warbling burglar tone (4)", value: "4" }
+                - { label: "Siren – pulsing alternate tone (20)", value: "20" }
+                - { label: "Lights only, no sound (36)", value: "36" }
+                - { label: "Do nothing (-1)", value: "-1" }
+    feedback:
+      name: Keypad feedback (Indicator values)
+      collapsed: true
+      input:
+        ind_disarmed:
+          name: Disarmed
+          default: 3
+          selector: { number: { min: -1, max: 63, mode: box } }
+        ind_armed_home:
+          name: Armed home
+          default: 1
+          selector: { number: { min: -1, max: 63, mode: box } }
+        ind_armed_away:
+          name: Armed away
+          default: 2
+          selector: { number: { min: -1, max: 63, mode: box } }
+        ind_arming:
+          name: Arming (exit delay)
+          description: Best guess — 23 shows a red countdown animation.
+          default: 23
+          selector: { number: { min: -1, max: 63, mode: box } }
+        ind_pending:
+          name: Pending (entry delay)
+          description: Best guess — 8 blinks red with beeps.
+          default: 8
+          selector: { number: { min: -1, max: 63, mode: box } }
+
+mode: queued
+max: 10
+
+variables:
+  keypad: !input keypad
+  alarm: !input alarm_panel
+  code_helper: !input code_helper
+  code_max_age: !input code_max_age
+  silent_status: !input silent_status
+  triggered_sound: !input triggered_sound
+  base_map:
+    disarmed: !input ind_disarmed
+    armed_home: !input ind_armed_home
+    armed_night: !input ind_armed_home
+    armed_vacation: !input ind_armed_away
+    armed_custom_bypass: !input ind_armed_home
+    armed_away: !input ind_armed_away
+    arming: !input ind_arming
+    pending: !input ind_pending
+
+triggers:
+  - trigger: event
+    id: keypad
+    event_type: zwave_js_notification
+    event_data:
+      device_id: !input keypad
+      command_class: 111
+  - trigger: state
+    id: alarm_state
+    entity_id: !input alarm_panel
+    not_to: [unknown, unavailable]
+  - trigger: homeassistant
+    id: alarm_state
+    event: start
+
+actions:
+  - choose:
+      # ---------- Alarm state -> keypad feedback ----------
+      - conditions: "{{ trigger.id == 'alarm_state' }}"
+        sequence:
+          - variables:
+              st: "{{ states(alarm) }}"
+              ind: >-
+                {% if st == 'triggered' %}{{ triggered_sound | int(-1) }}
+                {% else %}
+                  {%- set v = base_map.get(st, -1) | int(-1) -%}
+                  {{ v + 32 if (silent_status and 0 <= v < 32) else v }}
+                {% endif %}
+          - condition: "{{ ind | int(-1) >= 0 }}"
+          - action: zwave_js.set_value
+            data:
+              device_id: "{{ keypad }}"
+              command_class: 135
+              property: value
+              value: "{{ ind | int }}"
+
+      # ---------- Keypad event -> alarm action ----------
+      - conditions: "{{ trigger.id == 'keypad' }}"
+        sequence:
+          - variables:
+              etype: "{{ trigger.event.data.event_type | int }}"
+              attached: "{{ trigger.event.data.event_data | default('', true) | string | trim }}"
+              buffered: >-
+                {{ states(code_helper) if states(code_helper) not in ['unknown', 'unavailable'] else '' }}
+              buffered_age: >-
+                {{ (now() - states[code_helper].last_changed).total_seconds()
+                   if states[code_helper] is not none else 9999 }}
+              code: >-
+                {% if attached | length > 0 %}{{ attached }}
+                {% elif buffered | length > 0 and buffered_age | float < code_max_age | float %}{{ buffered }}
+                {% endif %}
+              action_map:
+                3: alarm_control_panel.alarm_disarm
+                5: alarm_control_panel.alarm_arm_away
+                6: alarm_control_panel.alarm_arm_home
+          - choose:
+              # 1 Cached keys / 2 Enter with data: remember the code
+              - conditions: "{{ etype in [1, 2] and attached | length > 0 }}"
+                sequence:
+                  - action: input_text.set_value
+                    target: { entity_id: "{{ code_helper }}" }
+                    data: { value: "{{ attached }}" }
+              # 25 Cancel: clear the buffer
+              - conditions: "{{ etype == 25 }}"
+                sequence:
+                  - action: input_text.set_value
+                    target: { entity_id: "{{ code_helper }}" }
+                    data: { value: "" }
+              # 3 Disarm / 5 Away / 6 Home (disarm always needs a code)
+              - conditions: "{{ etype in [3, 5, 6] and not (etype == 3 and code | trim | length == 0) }}"
+                sequence:
+                  - action: "{{ action_map[etype] }}"
+                    target: { entity_id: "{{ alarm }}" }
+                    data: "{{ {'code': code | trim} if code | trim | length > 0 else {} }}"
+                    continue_on_error: true
+                  - action: input_text.set_value
+                    target: { entity_id: "{{ code_helper }}" }
+                    data: { value: "" }

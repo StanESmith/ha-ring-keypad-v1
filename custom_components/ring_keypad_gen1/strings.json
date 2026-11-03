@@ -1,0 +1,102 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Ring Keypad (1st Gen)",
+        "description": "Pick the Ring Gen 1 keypad (already paired to Z-Wave JS) and the alarm panel it should control.",
+        "data": {
+          "keypad_device_id": "Keypad",
+          "alarm_entity_id": "Alarm panel"
+        }
+      }
+    },
+    "error": {
+      "device_not_found": "That device could not be found."
+    },
+    "abort": {
+      "already_configured": "This keypad is already set up."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Keypad options",
+        "data": {
+          "silent_status": "Silent status lights",
+          "triggered_sound": "Alarm sound when triggered",
+          "code_timeout": "Code buffer timeout",
+          "ind_disarmed": "Indicator value: Disarmed",
+          "ind_armed_home": "Indicator value: Armed home",
+          "ind_armed_away": "Indicator value: Armed away",
+          "ind_arming": "Indicator value: Arming (exit delay)",
+          "ind_pending": "Indicator value: Pending (entry delay)"
+        },
+        "data_description": {
+          "silent_status": "Show the mode lights without keypad sounds (adds 32). Does not affect the alarm sound.",
+          "code_timeout": "How long a code typed before a mode button stays valid.",
+          "ind_arming": "Best guess: 23 shows a red countdown animation. -1 skips this state.",
+          "ind_pending": "Best guess: 8 blinks red with beeps. -1 skips this state."
+        }
+      }
+    }
+  },
+  "selector": {
+    "triggered_sound": {
+      "options": {
+        "4": "Siren – warbling burglar tone (4)",
+        "20": "Siren – pulsing alternate tone (20)",
+        "36": "Lights only, no sound (36)",
+        "-1": "Do nothing"
+      }
+    }
+  },
+  "entity": {
+    "event": {
+      "keypad": {
+        "name": "Keypad",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "alarm_disarm": "Disarmed",
+              "alarm_arm_home": "Armed home",
+              "alarm_arm_away": "Armed away",
+              "code_entered": "Code entered",
+              "code_cancel": "Cancelled",
+              "action_failed": "Action failed"
+            }
+          }
+        }
+      }
+    }
+  },
+  "services": {
+    "set_indicator": {
+      "name": "Set indicator",
+      "description": "Send a raw Indicator value (0–63) to the keypad.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Keypad",
+          "description": "The Ring Keypad (1st Gen) entry."
+        },
+        "value": {
+          "name": "Value",
+          "description": "Low 4 bits pick the lights, +16 changes the sound, +32 mutes."
+        }
+      }
+    },
+    "chime": {
+      "name": "Chime",
+      "description": "Play a chime on the keypad (e.g. when a door opens). The alarm-state lights are restored afterwards.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Keypad",
+          "description": "The Ring Keypad (1st Gen) entry."
+        },
+        "value": {
+          "name": "Chime",
+          "description": "15 = door chime. Other values can be tried."
+        }
+      }
+    }
+  }
+}

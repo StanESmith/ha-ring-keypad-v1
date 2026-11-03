@@ -1,0 +1,181 @@
+# Ring Keypad (1st Gen) – Indicator CC probe (video-friendly)
+# Paste into Settings → Automations & Scenes → Scripts → Add → ⋮ Edit in YAML.
+#
+# Timeline of a run (makes the video easy to segment):
+#   Siren Volume (config param 12) is set low first.
+#   SYNC:  <sync value> for 3 s, off 3 s, twice  (double flash)
+#   then for each value N:  N for <pause> s, then 0 ("off") for <gap> s
+#   END:   the same double flash again, then a notification.
+# Every send is also written to the Logbook.
+# Run time ≈ (values × (pause + gap)) + 24 s of sync/end markers.
+
+alias: Ring Keypad Gen1 Indicator Probe
+description: Sweeps Indicator CC (0x87) values with a sync marker and off-gaps for video review.
+mode: single
+fields:
+  keypad:
+    name: Keypad
+    required: true
+    selector:
+      device:
+        filter:
+          integration: zwave_js
+  start:
+    name: Start value
+    default: 1
+    selector:
+      number: { min: 0, max: 255, mode: box }
+  end:
+    name: End value
+    default: 30
+    selector:
+      number: { min: 0, max: 255, mode: box }
+  pause:
+    name: Seconds per value
+    default: 5
+    selector:
+      number: { min: 1, max: 30, mode: box }
+  gap:
+    name: Seconds off between values
+    default: 2
+    selector:
+      number: { min: 0, max: 10, mode: box }
+  values:
+    name: Specific values (optional)
+    description: Comma-separated list, e.g. 65,66,67,68. Overrides start/end when filled in.
+    selector:
+      text: {}
+  sync_value:
+    name: Sync flash value (0 = no sync)
+    description: An Indicator value you already know is clearly visible, e.g. one of the arming modes.
+    default: 3
+    selector:
+      number: { min: 0, max: 255, mode: box }
+  siren_volume:
+    name: Siren volume during probe (0-10)
+    description: Sets config parameter 12 before sweeping. Normal default is 6.
+    default: 1
+    selector:
+      number: { min: 0, max: 10, mode: slider }
+  notify_service:
+    name: Phone notification service (optional)
+    description: e.g. notify.mobile_app_your_phone. Leave empty for an HA notification only.
+    selector:
+      text: {}
+sequence:
+  # Fields that aren't filled in on the run form arrive undefined, so apply
+  # fallbacks here and use these names below.
+  - variables:
+      # If no keypad was picked, find the Ring Gen1 keypad among Z-Wave JS devices
+      p_keypad: >-
+        {% if keypad is defined and keypad %}{{ keypad }}{% else %}
+        {%- set ns = namespace(id='') -%}
+        {%- for e in integration_entities('zwave_js') -%}
+          {%- set d = device_id(e) -%}
+          {%- if d and not ns.id
+                and 'Ring' in (device_attr(d, 'manufacturer') or '')
+                and ('1st' in (device_attr(d, 'model') or '') ~ (device_attr(d, 'name') or '')
+                     or '4AK1S7' in (device_attr(d, 'model') or '')
+                     or '4AK1E9' in (device_attr(d, 'model') or '')) -%}
+            {%- set ns.id = d -%}
+          {%- endif -%}
+        {%- endfor -%}{{ ns.id }}{% endif %}
+      p_start: "{{ start | default(1) | int }}"
+      p_end: "{{ end | default(30) | int }}"
+      p_pause: "{{ pause | default(5) | int }}"
+      p_gap: "{{ gap | default(2) | int }}"
+      p_sync: "{{ sync_value | default(3) | int }}"
+      p_siren: "{{ siren_volume | default(1) | int }}"
+      p_list: >-
+        {%- set raw = (values | default('', true) | string).replace(' ', '') -%}
+        {%- if raw -%}{{ raw.split(',') | reject('eq', '') | map('int') | list }}{%- else -%}{{ range(p_start, p_end + 1) | list }}{%- endif -%}
+      p_notify: "{{ notify_service | default('', true) | trim }}"
+      p_secs: "{{ ((p_list | count) * (p_pause + p_gap)) + (24 if p_sync > 0 else 0) }}"
+  - if: "{{ not p_keypad }}"
+    then:
+      - stop: "No Ring Gen1 keypad found. Open the script, fill in the Keypad field, and run it from the form."
+        error: true
+  - action: logbook.log
+    data:
+      name: Ring probe
+      message: "Using device {{ device_attr(p_keypad, 'name_by_user') or device_attr(p_keypad, 'name') }}"
+  - action: zwave_js.set_config_parameter
+    data:
+      device_id: "{{ p_keypad }}"
+      parameter: 12
+      value: "{{ p_siren }}"
+  - action: logbook.log
+    data: { name: Ring probe, message: "Siren volume set to {{ p_siren }}" }
+  - if: "{{ p_sync > 0 }}"
+    then:
+      - repeat:
+          count: 2
+          sequence:
+            - action: zwave_js.set_value
+              data: { device_id: "{{ p_keypad }}", command_class: 135, property: value, value: "{{ p_sync }}" }
+            - delay: { seconds: 3 }
+            - action: zwave_js.set_value
+              data: { device_id: "{{ p_keypad }}", command_class: 135, property: value, value: 0 }
+            - delay: { seconds: 3 }
+      - action: logbook.log
+        data: { name: Ring probe, message: "Sync marker done, sweep starting" }
+  - action: persistent_notification.create
+    data:
+      notification_id: ring_probe
+      title: Ring probe running
+      message: >-
+        Sweeping {{ p_list | join(', ') if p_list | count <= 20 else (p_list | first ~ '–' ~ p_list | last) }}. Expected to finish around
+        {{ (now() + timedelta(seconds=p_secs | int)).strftime('%-I:%M %p') }}
+        (about {{ (p_secs | int / 60) | round(1) }} min).
+  - repeat:
+      for_each: "{{ p_list }}"
+      sequence:
+        - action: logbook.log
+          data:
+            name: Ring probe
+            message: "Indicator set {{ repeat.item }}"
+        - action: zwave_js.set_value
+          data:
+            device_id: "{{ p_keypad }}"
+            command_class: 135
+            property: value
+            value: "{{ repeat.item | int }}"
+        - delay:
+            seconds: "{{ p_pause }}"
+        - if: "{{ p_gap > 0 }}"
+          then:
+            - action: zwave_js.set_value
+              data: { device_id: "{{ p_keypad }}", command_class: 135, property: value, value: 0 }
+            - delay:
+                seconds: "{{ p_gap }}"
+  - action: zwave_js.set_value
+    data: { device_id: "{{ p_keypad }}", command_class: 135, property: value, value: 0 }
+  # End marker: same double flash, so the video shows where the batch stops
+  - if: "{{ p_sync > 0 }}"
+    then:
+      - delay: { seconds: 2 }
+      - repeat:
+          count: 2
+          sequence:
+            - action: zwave_js.set_value
+              data: { device_id: "{{ p_keypad }}", command_class: 135, property: value, value: "{{ p_sync }}" }
+            - delay: { seconds: 3 }
+            - action: zwave_js.set_value
+              data: { device_id: "{{ p_keypad }}", command_class: 135, property: value, value: 0 }
+            - delay: { seconds: 3 }
+  - action: logbook.log
+    data:
+      name: Ring probe
+      message: "Probe finished ({{ p_list | join(', ') if p_list | count <= 20 else (p_start ~ '–' ~ p_end) }})"
+  - action: persistent_notification.create
+    data:
+      notification_id: ring_probe
+      title: Ring probe finished
+      message: "Values {{ p_start }}–{{ p_end }} done. Stop recording. Next batch: start at {{ p_end + 1 }}."
+  - if: "{{ p_notify | length > 0 }}"
+    then:
+      - action: "{{ p_notify }}"
+        continue_on_error: true
+        data:
+          title: Ring probe finished
+          message: "Values {{ p_start }}–{{ p_end }} done. Stop recording. Next: start at {{ p_end + 1 }}."
