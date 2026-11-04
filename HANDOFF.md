@@ -12,6 +12,49 @@ Start with [Debugging the sync](#1-debug-the-alarmo--keypad-sync-current-bug).
 
 ---
 
+## 2026-11-04 — Silent arm/disarm / voice-suppression option (v0.4.0)
+
+Added to answer "arm and disarm the house and not have the voice spoken from the keypad."
+
+**The spoken voice is built into Indicator values 1/2/3** (armed_home=1 / armed_away=2 / disarmed=3):
+the keypad speaks a voice announcement ("system armed", "disarmed", etc.) on those settled states.
+The **+32 silent bit (→ 33/34/35) suppresses that voice**. (An earlier draft of this note wrongly
+claimed 1/2/3 were "already quiet / no spoken voice" — that was corrected per the user.) There is no
+separate voice/audio *config parameter* on this US firmware (params 22–24 time out); the only sound
+levers are Key Tone Volume (param 10, user set to 3), Siren Volume (param 12) and the Indicator CC.
++32 also mutes the countdown beeps and sirens, but **not** the door chime.
+
+Change: the single `silent_status` toggle was split into two complementary options (both set +32,
+both keep the lights, neither touches the siren):
+
+- `silent_status` → scoped to the **settled** states (disarmed / armed_home / armed_away and their
+  aliases). Relabeled "Silent armed/disarmed status". **This is the lever for the user's request:
+  with it on, the controller sends 33/34/35 instead of 1/2/3, suppressing the spoken voice.**
+  (Existing entries keep the key; this narrows its effect from "all status states" to "settled
+  states only" — safe here, the live entry has it `false`.)
+- `silent_armdisarm` (**new**, default `false`) → mutes the **exit/entry-delay countdown beeps**
+  (`arming` 23 → 55, `pending` 8 → 40). Enable both for a fully silent arm/disarm.
+
+Code path verified from source + unit tests (no live indicator sent): `silent_status` on →
+`indicator_for_state` returns 1+32/2+32/3+32 = 33/34/35 for armed_home/armed_away/disarmed, sent via
+`async_set_indicator`. Logic lives in `logic._mute_sound()` (pure). Files touched: `const.py`,
+`logic.py`, `config_flow.py`, `strings.json`, `translations/en.json`, `README.md`, `manifest.json`
+(0.3.3 → 0.4.0), and tests. **26 tests pass** (was 21) — `test_silent_status` asserts armed_home→33,
+`test_logic` asserts disarmed→35/armed_away→34. Arm/disarm both directions was left unchanged and is
+already working (entry `01M6GPAZBV3EK4W40SZP9JDWJ1` loaded, following `alarm_control_panel.alarmo`,
+event entity firing).
+
+**Open question the live test resolves:** whether +32 mutes the *spoken voice* specifically (not only
+beeps). The probe table proved +32 mutes beeps/sirens; the user states 1/2/3 are the voice, so
+33/34/35 should be silent — the live arm/disarm is the confirmation.
+
+**Not yet deployed.** Live hardware test (keep **param 12 Siren Volume = 1**): deploy 0.4.0, set
+option **`silent_status: true`**, then arm Away and disarm at the keypad and confirm **no spoken
+voice** while the lights still change. Then also set `silent_armdisarm: true` and confirm the
+exit/entry-delay countdown beeps are gone too.
+
+---
+
 ## Environment
 
 | Item | Value |
@@ -110,9 +153,9 @@ Mapped from video and audio of probe sweeps, with HA Logbook timestamps:
 | Value | Lights | Sound |
 |---|---|---|
 | 0 | mode lights off | — |
-| **1** | right shield amber (**Armed Home**) | quiet |
-| **2** | left shield amber (**Armed Away**) | quiet |
-| **3** | bottom shield blue / blue ring (**Disarmed**) | quiet |
+| **1** | right shield amber (**Armed Home**) | **spoken voice** ("system armed", etc.); +32 → 33 is silent |
+| **2** | left shield amber (**Armed Away**) | **spoken voice**; +32 → 34 is silent |
+| **3** | bottom shield blue / blue ring (**Disarmed**) | **spoken voice** ("disarmed"); +32 → 35 is silent |
 | **4** | full red ring (**Alarm**) | warbling siren, about 1.4–3 kHz |
 | 6–7 | full red ring | quiet |
 | 8 | red ring blinking | beeps (current *pending* default) |
@@ -126,7 +169,7 @@ Mapped from video and audio of probe sweeps, with HA Logbook timestamps:
 | 64–255 | ignored | — |
 
 Structure: the **low 4 bits** pick the light pattern, **+16** picks an alternate sound set, **+32**
-mutes sirens and beeps (not the door chime), and **values ≥ 64 are ignored**.
+mutes the spoken voice, sirens and beeps (not the door chime), and **values ≥ 64 are ignored**.
 
 **The blue "disarmed" bottom shield is firmware-controlled.** No tested value keeps it off (0, 15, 16
 and 47 tested by hand). Param 7 (Power Mode) = 0 made no difference on mains power. A display-timeout

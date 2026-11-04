@@ -18,6 +18,7 @@ from custom_components.ring_keypad_gen1.const import (
     CONF_KEYPAD_DEVICE,
     DEFAULT_OPTIONS,
     DOMAIN,
+    OPT_SILENT_ARMDISARM,
     OPT_SILENT_STATUS,
 )
 
@@ -108,6 +109,18 @@ async def test_silent_status(hass: HomeAssistant, keypad_device):
     hass.states.async_set(ALARM, "armed_home")
     await hass.async_block_till_done()
     assert set_value[-1].data["value"] == 33
+
+
+async def test_silent_armdisarm_mutes_delay_countdown(
+    hass: HomeAssistant, keypad_device
+):
+    _, set_value, _ = await _setup(hass, keypad_device, {OPT_SILENT_ARMDISARM: True})
+    hass.states.async_set(ALARM, "arming")
+    await hass.async_block_till_done()
+    assert set_value[-1].data["value"] == 55  # 23 + 32, exit-delay beeps muted
+    hass.states.async_set(ALARM, "armed_away")
+    await hass.async_block_till_done()
+    assert set_value[-1].data["value"] == 2  # settled state untouched
 
 
 async def test_keypad_disarm_with_separate_code(hass: HomeAssistant, keypad_device):

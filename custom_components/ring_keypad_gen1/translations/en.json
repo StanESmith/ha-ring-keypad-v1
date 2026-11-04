@@ -22,7 +22,8 @@
       "init": {
         "title": "Keypad options",
         "data": {
-          "silent_status": "Silent status lights",
+          "silent_status": "Silent armed/disarmed status",
+          "silent_armdisarm": "Silent arm/disarm",
           "triggered_sound": "Alarm sound when triggered",
           "code_timeout": "Code buffer timeout",
           "ind_disarmed": "Indicator value: Disarmed",
@@ -32,7 +33,8 @@
           "ind_pending": "Indicator value: Pending (entry delay)"
         },
         "data_description": {
-          "silent_status": "Show the mode lights without keypad sounds (adds 32). Does not affect the alarm sound.",
+          "silent_status": "Suppress the keypad's spoken voice announcement (\"system armed\", \"disarmed\", etc.) when the system settles into an armed or disarmed state (keeps the same lights). This is the setting for silencing the keypad's voice. Does not affect the siren.",
+          "silent_armdisarm": "Mute the keypad beeps during the exit-delay and entry-delay countdown while arming and disarming (keeps the same lights). Turn this on together with \"Silent armed/disarmed status\" for a fully silent arm/disarm. Does not affect the siren.",
           "code_timeout": "How long a code typed before a mode button stays valid.",
           "ind_arming": "Best guess: 23 shows a red countdown animation. -1 skips this state.",
           "ind_pending": "Best guess: 8 blinks red with beeps. -1 skips this state."

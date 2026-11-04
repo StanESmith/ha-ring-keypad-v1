@@ -20,6 +20,7 @@ from .const import (
     OPT_IND_ARMING,
     OPT_IND_DISARMED,
     OPT_IND_PENDING,
+    OPT_SILENT_ARMDISARM,
     OPT_SILENT_STATUS,
     OPT_TRIGGERED_SOUND,
 )
@@ -109,6 +110,38 @@ _STATE_OPTION = {
     "pending": OPT_IND_PENDING,
 }
 
+# "Settled" arm/disarm states vs the transitional exit/entry-delay countdown.
+# The two silent options mute complementary sets of these (triggered is never
+# muted here; it has its own OPT_TRIGGERED_SOUND control).
+_SETTLED_STATES = frozenset(
+    {
+        "disarmed",
+        "armed_home",
+        "armed_night",
+        "armed_custom_bypass",
+        "armed_away",
+        "armed_vacation",
+    }
+)
+_DELAY_STATES = frozenset({"arming", "pending"})
+
+
+def _mute_sound(state: str, options: dict) -> bool:
+    """Whether the keypad sound for this state should be muted (the +32 bit).
+
+    - OPT_SILENT_STATUS silences the settled armed/disarmed states. Indicator
+      values 1/2/3 make the keypad speak a voice announcement ("system armed",
+      etc.); +32 (-> 33/34/35) suppresses that spoken announcement.
+    - OPT_SILENT_ARMDISARM silences the exit/entry-delay countdown (beeps) heard
+      while arming and disarming.
+    Both can be on for a fully silent arm/disarm; neither affects the siren.
+    """
+    if options.get(OPT_SILENT_STATUS) and state in _SETTLED_STATES:
+        return True
+    if options.get(OPT_SILENT_ARMDISARM) and state in _DELAY_STATES:
+        return True
+    return False
+
 
 def indicator_for_state(state: str, options: dict) -> int | None:
     """Map an alarm_control_panel state to an Indicator value (or None to skip)."""
@@ -119,7 +152,7 @@ def indicator_for_state(state: str, options: dict) -> int | None:
         if opt is None:
             return None
         value = int(options.get(opt, -1))
-        if options.get(OPT_SILENT_STATUS) and 0 <= value < INDICATOR_SILENT_BIT:
+        if _mute_sound(state, options) and 0 <= value < INDICATOR_SILENT_BIT:
             value += INDICATOR_SILENT_BIT
     if value < 0 or value > INDICATOR_MAX:
         return None

@@ -11,6 +11,7 @@ CONF_ALARM_ENTITY: Final = "alarm_entity_id"
 
 OPT_CODE_TIMEOUT: Final = "code_timeout"
 OPT_SILENT_STATUS: Final = "silent_status"
+OPT_SILENT_ARMDISARM: Final = "silent_armdisarm"
 OPT_TRIGGERED_SOUND: Final = "triggered_sound"
 OPT_IND_DISARMED: Final = "ind_disarmed"
 OPT_IND_ARMED_HOME: Final = "ind_armed_home"
@@ -22,6 +23,7 @@ DEFAULT_CODE_TIMEOUT: Final = 10
 DEFAULT_OPTIONS: Final[dict[str, int | bool | str]] = {
     OPT_CODE_TIMEOUT: DEFAULT_CODE_TIMEOUT,
     OPT_SILENT_STATUS: False,
+    OPT_SILENT_ARMDISARM: False,
     OPT_TRIGGERED_SOUND: "4",
     OPT_IND_DISARMED: 3,
     OPT_IND_ARMED_HOME: 1,
@@ -46,6 +48,9 @@ EC_CANCEL: Final = 25
 # Indicator value structure (mapped on a US 4AK1S7, firmware 2.16):
 # low 4 bits select the light pattern, +16 selects the alternate sound set,
 # +32 mutes sound, 64-255 are ignored by the keypad.
+# Values 1/2/3 (armed_home / armed_away / disarmed) trigger a spoken VOICE
+# announcement ("system armed", etc.) built into those indicator values; the
+# +32 silent bit (-> 33/34/35) is how the announcement is suppressed.
 INDICATOR_SILENT_BIT: Final = 32
 INDICATOR_MAX: Final = 63
 

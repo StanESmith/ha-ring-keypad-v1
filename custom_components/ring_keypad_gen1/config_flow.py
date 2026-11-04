@@ -39,6 +39,7 @@ from .const import (
     OPT_IND_ARMING,
     OPT_IND_DISARMED,
     OPT_IND_PENDING,
+    OPT_SILENT_ARMDISARM,
     OPT_SILENT_STATUS,
     OPT_TRIGGERED_SOUND,
     TRIGGERED_SOUND_OPTIONS,
@@ -113,6 +114,9 @@ class RingKeypadOptionsFlow(OptionsFlow):
             {
                 vol.Required(
                     OPT_SILENT_STATUS, default=current[OPT_SILENT_STATUS]
+                ): BooleanSelector(),
+                vol.Required(
+                    OPT_SILENT_ARMDISARM, default=current[OPT_SILENT_ARMDISARM]
                 ): BooleanSelector(),
                 vol.Required(
                     OPT_TRIGGERED_SOUND, default=str(current[OPT_TRIGGERED_SOUND])

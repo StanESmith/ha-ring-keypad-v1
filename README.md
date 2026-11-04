@@ -36,10 +36,16 @@ alarm panel.
 
 | Option | What it does |
 |---|---|
-| Silent status lights | Mode lights without keypad sounds (adds 32) |
+| Silent armed/disarmed status | Suppresses the keypad's **spoken voice** announcement ("system armed", "disarmed", …) on the settled armed/disarmed states (same lights, adds 32) |
+| Silent arm/disarm | Mutes the exit/entry-delay countdown **beeps** while arming and disarming (same lights). Enable both silent options for a fully silent arm/disarm |
 | Alarm sound when triggered | 4 warbling siren · 20 pulsing siren · 36 lights only · off |
 | Code buffer timeout | How long a code typed before a mode button stays valid |
 | Indicator values | Per-state values, if your firmware differs |
+
+> **Silencing the keypad's voice:** Indicator values 1/2/3 (armed home / armed away / disarmed) make
+> the keypad **speak a voice announcement** that is built into those values. The +32 silent bit
+> (→ 33/34/35) suppresses it — that is what **Silent armed/disarmed status** does. The siren
+> (triggered) and the door chime are not affected by these options.
 
 ### Actions
 
@@ -98,9 +104,9 @@ Mapped on a US 4AK1S7, firmware 2.16, Z-Wave JS 15.31:
 | Value | Lights | Sound |
 |---|---|---|
 | 0 | Off | — |
-| **1** | Right shield amber — **Armed Home** | quiet |
-| **2** | Left shield amber — **Armed Away** | quiet |
-| **3** | Bottom shield blue / blue ring — **Disarmed** | quiet |
+| **1** | Right shield amber — **Armed Home** | spoken voice ("system armed", etc.) |
+| **2** | Left shield amber — **Armed Away** | spoken voice |
+| **3** | Bottom shield blue / blue ring — **Disarmed** | spoken voice ("disarmed") |
 | **4** | Full red ring — **Alarm** | warbling siren (~1.4–3 kHz) |
 | 6–7 | Full red ring | quiet |
 | **8** | Red ring blinking | beeps |
@@ -112,7 +118,7 @@ Mapped on a US 4AK1S7, firmware 2.16, Z-Wave JS 15.31:
 | 24–27 | Red ring blinking / held | beeps |
 
 Structure: **low 4 bits** choose the light pattern, **+16** selects an alternate sound set,
-**+32** mutes sirens and beeps (same lights) but **not** the door chime, **64–255 are ignored**.
+**+32** mutes the spoken voice, sirens and beeps (same lights) but **not** the door chime, **64–255 are ignored**.
 Arming (23) and Pending (8) defaults are best guesses — change them in options.
 
 Configuration parameters 22–24 (language, audio files) from the EU technical manual do **not**
