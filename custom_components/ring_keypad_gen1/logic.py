@@ -20,8 +20,8 @@ from .const import (
     OPT_IND_ARMING,
     OPT_IND_DISARMED,
     OPT_IND_PENDING,
-    OPT_SILENT_ARMDISARM,
     OPT_SILENT_STATUS,
+    OPT_SILENT_ARMDISARM,
     OPT_TRIGGERED_SOUND,
 )
 
@@ -152,7 +152,7 @@ def indicator_for_state(state: str, options: dict) -> int | None:
         if opt is None:
             return None
         value = int(options.get(opt, -1))
-        if _mute_sound(state, options) and 0 <= value < INDICATOR_SILENT_BIT:
+        if _mute_sound(state, options) and 0 <= value < 2 * INDICATOR_SILENT_BIT:
             value += INDICATOR_SILENT_BIT
     if value < 0 or value > INDICATOR_MAX:
         return None

@@ -45,13 +45,19 @@ EC_AWAY: Final = 5
 EC_HOME: Final = 6
 EC_CANCEL: Final = 25
 
-# Indicator value structure (mapped on a US 4AK1S7, firmware 2.16):
-# low 4 bits select the light pattern, +16 selects the alternate sound set,
-# +32 mutes sound, 64-255 are ignored by the keypad.
-# Values 1/2/3 (armed_home / armed_away / disarmed) trigger a spoken VOICE
-# announcement ("system armed", etc.) built into those indicator values; the
-# +32 silent bit (-> 33/34/35) is how the announcement is suppressed.
-INDICATOR_SILENT_BIT: Final = 32
+# Indicator value structure (verified LIVE on a US 4AK1S7, firmware 2.16, on
+# 2026-11-05): the low 4 bits select the light pattern; +16 selects the
+# "alternate sound set", which for the status values 1/2/3 (armed_home /
+# armed_away / disarmed) is the SAME persistent light shown SILENTLY. Those
+# base values 1/2/3 speak a built-in VOICE announcement ("system armed",
+# "disarmed", etc.); their +16 forms 17/18/19 show the identical lights with
+# NO voice and no beep -- that is how the announcement is suppressed.
+#
+# WARNING: the +32 "silent" bit does NOT mute the voice -- value 35 (3+32)
+# still said "disarmed" out loud in the live test. Do not use +32 for silence.
+# Value 4 is the warbling burglar SIREN; never send it as a status light.
+# 64-255 are ignored by the keypad.
+INDICATOR_SILENT_BIT: Final = 16
 INDICATOR_MAX: Final = 63
 
 TRIGGERED_SOUND_OPTIONS: Final = ["4", "20", "36", "-1"]

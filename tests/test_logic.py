@@ -95,8 +95,8 @@ def test_indicator_defaults():
 
 def test_indicator_silent_and_alarm_sound():
     o = {**DEFAULT_OPTIONS, OPT_SILENT_STATUS: True, OPT_TRIGGERED_SOUND: "20"}
-    assert indicator_for_state("disarmed", o) == 35
-    assert indicator_for_state("armed_away", o) == 34
+    assert indicator_for_state("disarmed", o) == 19
+    assert indicator_for_state("armed_away", o) == 18
     assert indicator_for_state("triggered", o) == 20  # alarm sound not muted
     o[OPT_TRIGGERED_SOUND] = "-1"
     assert indicator_for_state("triggered", o) is None
@@ -106,8 +106,8 @@ def test_silent_status_only_mutes_settled_states():
     # silent_status mutes the settled armed/disarmed tones, not the
     # exit/entry-delay countdown.
     o = {**DEFAULT_OPTIONS, OPT_SILENT_STATUS: True}
-    assert indicator_for_state("disarmed", o) == 35  # 3 + 32
-    assert indicator_for_state("armed_home", o) == 33  # 1 + 32
+    assert indicator_for_state("disarmed", o) == 19  # 3 + 16
+    assert indicator_for_state("armed_home", o) == 17  # 1 + 16
     assert indicator_for_state("arming", o) == 23  # countdown still audible
     assert indicator_for_state("pending", o) == 8
 
@@ -116,18 +116,18 @@ def test_silent_armdisarm_only_mutes_delay_states():
     # The new option mutes the arm/disarm countdown (the audible part), while
     # the settled states keep their own (quiet) tone untouched.
     o = {**DEFAULT_OPTIONS, OPT_SILENT_ARMDISARM: True}
-    assert indicator_for_state("arming", o) == 55  # 23 + 32
-    assert indicator_for_state("pending", o) == 40  # 8 + 32
+    assert indicator_for_state("arming", o) == 39  # 23 + 16
+    assert indicator_for_state("pending", o) == 24  # 8 + 16
     assert indicator_for_state("disarmed", o) == 3  # unchanged
     assert indicator_for_state("armed_away", o) == 2  # unchanged
 
 
 def test_both_silent_options_fully_silent_armdisarm():
     o = {**DEFAULT_OPTIONS, OPT_SILENT_STATUS: True, OPT_SILENT_ARMDISARM: True}
-    assert indicator_for_state("arming", o) == 55
-    assert indicator_for_state("pending", o) == 40
-    assert indicator_for_state("disarmed", o) == 35
-    assert indicator_for_state("armed_away", o) == 34
+    assert indicator_for_state("arming", o) == 39
+    assert indicator_for_state("pending", o) == 24
+    assert indicator_for_state("disarmed", o) == 19
+    assert indicator_for_state("armed_away", o) == 18
     assert indicator_for_state("triggered", o) == 4  # siren still sounds
 
 

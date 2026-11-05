@@ -108,7 +108,7 @@ async def test_silent_status(hass: HomeAssistant, keypad_device):
     _, set_value, _ = await _setup(hass, keypad_device, {OPT_SILENT_STATUS: True})
     hass.states.async_set(ALARM, "armed_home")
     await hass.async_block_till_done()
-    assert set_value[-1].data["value"] == 33
+    assert set_value[-1].data["value"] == 17
 
 
 async def test_silent_armdisarm_mutes_delay_countdown(
@@ -117,7 +117,7 @@ async def test_silent_armdisarm_mutes_delay_countdown(
     _, set_value, _ = await _setup(hass, keypad_device, {OPT_SILENT_ARMDISARM: True})
     hass.states.async_set(ALARM, "arming")
     await hass.async_block_till_done()
-    assert set_value[-1].data["value"] == 55  # 23 + 32, exit-delay beeps muted
+    assert set_value[-1].data["value"] == 39  # 23 + 16, exit-delay beeps muted
     hass.states.async_set(ALARM, "armed_away")
     await hass.async_block_till_done()
     assert set_value[-1].data["value"] == 2  # settled state untouched
@@ -189,10 +189,10 @@ async def test_set_indicator_service_validates(hass: HomeAssistant, keypad_devic
     await hass.services.async_call(
         DOMAIN,
         "set_indicator",
-        {"config_entry_id": entry.entry_id, "value": 33},
+        {"config_entry_id": entry.entry_id, "value": 17},
         blocking=True,
     )
-    assert set_value[-1].data["value"] == 33
+    assert set_value[-1].data["value"] == 17
     with pytest.raises(ServiceValidationError):
         await hass.services.async_call(
             DOMAIN, "chime", {"config_entry_id": "nope"}, blocking=True

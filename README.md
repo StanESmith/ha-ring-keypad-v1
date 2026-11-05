@@ -36,15 +36,15 @@ alarm panel.
 
 | Option | What it does |
 |---|---|
-| Silent armed/disarmed status | Suppresses the keypad's **spoken voice** announcement ("system armed", "disarmed", …) on the settled armed/disarmed states (same lights, adds 32) |
-| Silent arm/disarm | Mutes the exit/entry-delay countdown **beeps** while arming and disarming (same lights). Enable both silent options for a fully silent arm/disarm |
+| Silent armed/disarmed status | Suppresses the keypad's **spoken voice** announcement ("system armed", "disarmed", …) on the settled armed/disarmed states (same lights, adds 16 → 17/18/19) |
+| Silent arm/disarm | Mutes the exit/entry-delay countdown **beeps** while arming and disarming (same lights, adds 16 → 39/24). Enable both silent options for a fully silent arm/disarm |
 | Alarm sound when triggered | 4 warbling siren · 20 pulsing siren · 36 lights only · off |
 | Code buffer timeout | How long a code typed before a mode button stays valid |
 | Indicator values | Per-state values, if your firmware differs |
 
 > **Silencing the keypad's voice:** Indicator values 1/2/3 (armed home / armed away / disarmed) make
-> the keypad **speak a voice announcement** that is built into those values. The +32 silent bit
-> (→ 33/34/35) suppresses it — that is what **Silent armed/disarmed status** does. The siren
+> the keypad **speak a voice announcement** that is built into those values. The **+16 alternate sound set**
+> (→ 17/18/19) suppresses it — that is what **Silent armed/disarmed status** does. The siren
 > (triggered) and the door chime are not affected by these options.
 
 ### Actions
