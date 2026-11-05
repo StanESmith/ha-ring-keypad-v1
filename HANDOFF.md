@@ -55,6 +55,31 @@ exit/entry-delay countdown beeps are gone too.
 
 ---
 
+## 2026-11-04 — v0.4.1: Silent mode corrected to +16 alternate sound set (hardware-validated)
+
+**Hardware test proved +32 is a dud** — value 35 still spoke "disarmed" on the live keypad. The real
+silent set is the **+16 alternate sound set**: sending 17 / 18 / 19 gives the exact same persistent
+status lights with **no voice and no beep**. Transient animations and reverting to the stored light
+are always silent; the keypad only speaks on the explicit 1/2/3 command.
+
+| Feature | v0.4.0 (broken) | v0.4.1 (fixed) |
+|---------|-----------------|----------------|
+| Silent settled states | 33/34/35 (+32) | **17/18/19 (+16)** |
+| Silent arming delay | 55 (23+32) | **39 (23+16)** |
+| Silent pending delay | 40 (8+32) | **24 (8+16)** |
+
+**Changes:**
+- `const.py`: `INDICATOR_SILENT_BIT = 16` (was 32), added `OPT_SILENT_ARMDISARM` to defaults
+- `logic.py`: mute condition `0 <= value < 2 * INDICATOR_SILENT_BIT` (allows +16 for values < 32)
+- Tests updated to expect 17/18/19/39/24
+- README: documented correct silent values
+- manifest: version 0.4.1
+
+All 26 tests pass. Deployed and reloaded on live HA (entry `01M6GPAZBV3EK4W40SZP9JDWJ1`). New option
+`silent_armdisarm` appears in integration options (default `false`).
+
+---
+
 ## Environment
 
 | Item | Value |
