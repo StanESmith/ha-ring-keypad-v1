@@ -203,6 +203,12 @@ Apache-2.0 — see [LICENSE](LICENSE)
 
 ---
 
+## Attribution
+
+This integration was built with the help of **Claude Code** (Anthropic).
+
+---
+
 ## Links
 
 - **Repository:** [gitlab.thelander.xyz/other-projects/ha-ring-keypad-gen1](https://gitlab.thelander.xyz/other-projects/ha-ring-keypad-gen1)
