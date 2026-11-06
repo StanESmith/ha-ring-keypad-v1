@@ -211,27 +211,27 @@ This integration was built with the help of **Claude Code** (Anthropic).
 
 ## Links
 
-- **Repository:** [gitlab.thelander.xyz/other-projects/ha-ring-keypad-gen1](https://gitlab.thelander.xyz/other-projects/ha-ring-keypad-gen1)
+- **Repository:** [github.com/StanESmith/ha-ring-keypad-v1](https://github.com/StanESmith/ha-ring-keypad-v1)
 - **HACS:** Add as custom repository (Integration category)
 - **Gen 2 integration:** [allenporter/home-assistant-ring-keypad](https://github.com/allenporter/home-assistant-ring-keypad)
 - **Alarmo:** [nielsfaber/alarmo](https://github.com/nielsfaber/alarmo)
 
 ---
 
-[releases-shield]: https://img.shields.io/github/v/release/thelander/ha-ring-keypad-gen1?style=for-the-badge
-[releases]: https://github.com/thelander/ha-ring-keypad-gen1/releases
-[commits-shield]: https://img.shields.io/github/commit-activity/y/thelander/ha-ring-keypad-gen1?style=for-the-badge
-[commits]: https://github.com/thelander/ha-ring-keypad-gen1/commits/main
-[license-shield]: https://img.shields.io/github/license/thelander/ha-ring-keypad-gen1?style=for-the-badge
+[releases-shield]: https://img.shields.io/github/v/release/StanESmith/ha-ring-keypad-v1?style=for-the-badge
+[releases]: https://github.com/StanESmith/ha-ring-keypad-v1/releases
+[commits-shield]: https://img.shields.io/github/commit-activity/y/StanESmith/ha-ring-keypad-v1?style=for-the-badge
+[commits]: https://github.com/StanESmith/ha-ring-keypad-v1/commits/main
+[license-shield]: https://img.shields.io/github/license/StanESmith/ha-ring-keypad-v1?style=for-the-badge
 [license]: LICENSE
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
 [hacs]: https://hacs.xyz/docs/faq/custom_repositories/
 [maintenance-shield]: https://img.shields.io/maintenance/yes/2026?style=for-the-badge
 [buymecoffee-shield]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=for-the-badge
-[buymecoffee]: https://www.buymeacoffee.com/thelander
+[buymecoffee]: https://www.buymeacoffee.com/StanESmith
 
 [add-to-ha-shield]: https://my.home-assistant.io/badges/hacs_repository.svg
-[add-to-ha-url]: https://my.home-assistant.io/redirect/hacs_repository/?owner=thelander&repository=ha-ring-keypad-gen1&category=integration
+[add-to-ha-url]: https://my.home-assistant.io/redirect/hacs_repository/?owner=StanESmith&repository=ha-ring-keypad-v1&category=integration
 
 [hacs-add-repo-shield]: https://my.home-assistant.io/badges/hacs_repository.svg
-[hacs-add-repo-url]: https://my.home-assistant.io/redirect/hacs_repository/?owner=thelander&repository=ha-ring-keypad-gen1&category=integration
+[hacs-add-repo-url]: https://my.home-assistant.io/redirect/hacs_repository/?owner=StanESmith&repository=ha-ring-keypad-v1&category=integration
