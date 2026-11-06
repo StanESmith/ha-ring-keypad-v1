@@ -1,15 +1,15 @@
 {
   "domain": "ring_keypad_gen1",
   "name": "Ring Keypad (1st Gen)",
-  "codeowners": [],
+  "codeowners": ["@YOUR_GITHUB_USERNAME"],
   "config_flow": true,
   "dependencies": [
     "zwave_js"
   ],
-  "documentation": "https://example.com/REPLACE-with-your-repo",
+  "documentation": "https://github.com/YOUR_GITHUB_USERNAME/ha-ring-keypad-gen1",
   "integration_type": "device",
   "iot_class": "local_push",
-  "issue_tracker": "https://example.com/REPLACE-with-your-repo/issues",
+  "issue_tracker": "https://github.com/YOUR_GITHUB_USERNAME/ha-ring-keypad-gen1/issues",
   "requirements": [],
   "version": "0.4.1"
 }
