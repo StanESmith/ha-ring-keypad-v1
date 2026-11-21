@@ -23,6 +23,7 @@ from .const import (
     OPT_SILENT_STATUS,
     OPT_SILENT_ARMDISARM,
     OPT_TRIGGERED_SOUND,
+    TRIGGERED_SOUND_NONE,
 )
 
 ACTION_DISARM = "alarm_disarm"
@@ -146,7 +147,8 @@ def _mute_sound(state: str, options: dict) -> bool:
 def indicator_for_state(state: str, options: dict) -> int | None:
     """Map an alarm_control_panel state to an Indicator value (or None to skip)."""
     if state == "triggered":
-        value = int(options.get(OPT_TRIGGERED_SOUND, 4))
+        raw = options.get(OPT_TRIGGERED_SOUND, 4)
+        value = -1 if raw == TRIGGERED_SOUND_NONE else int(raw)
     else:
         opt = _STATE_OPTION.get(state)
         if opt is None:

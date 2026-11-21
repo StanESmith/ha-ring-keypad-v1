@@ -60,7 +60,9 @@ EC_CANCEL: Final = 25
 INDICATOR_SILENT_BIT: Final = 16
 INDICATOR_MAX: Final = 63
 
-TRIGGERED_SOUND_OPTIONS: Final = ["4", "20", "36", "-1"]
+# "none" means no indicator; -1 is what older versions stored, and is still understood.
+TRIGGERED_SOUND_NONE: Final = "none"
+TRIGGERED_SOUND_OPTIONS: Final = ["4", "20", "36", TRIGGERED_SOUND_NONE]
 # Chimes. 15 = Ring "door open" chime (47 = 15 + 32 chimes too; +32 does not
 # mute chimes). The blue "disarmed" shield goes dark only while a chime plays;
 # it is firmware-controlled and no tested value keeps it off (0, 15, 16, 47).

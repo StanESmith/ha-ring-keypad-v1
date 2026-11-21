@@ -100,6 +100,8 @@ def test_indicator_silent_and_alarm_sound():
     assert indicator_for_state("triggered", o) == 20  # alarm sound not muted
     o[OPT_TRIGGERED_SOUND] = "-1"
     assert indicator_for_state("triggered", o) is None
+    o[OPT_TRIGGERED_SOUND] = "none"  # what the options form stores now
+    assert indicator_for_state("triggered", o) is None
 
 
 def test_silent_status_only_mutes_settled_states():

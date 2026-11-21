@@ -48,7 +48,7 @@
         "4": "Siren – warbling burglar tone (4)",
         "20": "Siren – pulsing alternate tone (20)",
         "36": "Lights only, no sound (36)",
-        "-1": "Do nothing"
+        "none": "Do nothing"
       }
     }
   },

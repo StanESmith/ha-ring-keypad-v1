@@ -42,6 +42,7 @@ from .const import (
     OPT_SILENT_ARMDISARM,
     OPT_SILENT_STATUS,
     OPT_TRIGGERED_SOUND,
+    TRIGGERED_SOUND_NONE,
     TRIGGERED_SOUND_OPTIONS,
 )
 
@@ -87,6 +88,11 @@ class RingKeypadConfigFlow(ConfigFlow, domain=DOMAIN):
         return RingKeypadOptionsFlow()
 
 
+def _sound_choice(stored) -> str:
+    """The dropdown value for a stored triggered-sound option (older versions stored -1 for none)."""
+    return TRIGGERED_SOUND_NONE if str(stored) == "-1" else str(stored)
+
+
 def _ind() -> NumberSelector:
     return NumberSelector(
         NumberSelectorConfig(
@@ -119,7 +125,7 @@ class RingKeypadOptionsFlow(OptionsFlow):
                     OPT_SILENT_ARMDISARM, default=current[OPT_SILENT_ARMDISARM]
                 ): BooleanSelector(),
                 vol.Required(
-                    OPT_TRIGGERED_SOUND, default=str(current[OPT_TRIGGERED_SOUND])
+                    OPT_TRIGGERED_SOUND, default=_sound_choice(current[OPT_TRIGGERED_SOUND])
                 ): SelectSelector(
                     SelectSelectorConfig(
                         options=TRIGGERED_SOUND_OPTIONS,
