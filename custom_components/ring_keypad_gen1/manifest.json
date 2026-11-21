@@ -2,7 +2,7 @@
   "domain": "ring_keypad_gen1",
   "name": "Ring Keypad (1st Gen)",
   "categories": [
-    "security"
+    "security_safety.alarm_systems"
   ],
   "codeowners": [
     "@StanESmith"
