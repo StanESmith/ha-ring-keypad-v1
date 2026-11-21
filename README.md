@@ -85,6 +85,14 @@ After adding the integration, go to **Settings → Devices & Services → Ring K
 
 ---
 
+## Troubleshooting
+
+Download diagnostics from the integration's page (three dots → **Download diagnostics**) and attach them to an issue: they list the settings, the alarm panel's state and whether the keypad's Z-Wave device was found, and leave out the keypad's device id and any typed code. For more detail, turn on debug logging for `custom_components.ring_keypad_gen1`.
+
+See the [changelog](CHANGELOG.md) for what changed in each version.
+
+---
+
 ## Actions
 
 | Action | Description |

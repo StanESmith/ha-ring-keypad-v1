@@ -6,6 +6,7 @@ import pytest
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import (
@@ -20,7 +21,9 @@ from custom_components.ring_keypad_gen1.const import (
     DOMAIN,
     OPT_SILENT_ARMDISARM,
     OPT_SILENT_STATUS,
+    OPT_TRIGGERED_SOUND,
 )
+from custom_components.ring_keypad_gen1.diagnostics import async_get_config_entry_diagnostics
 
 ALARM = "alarm_control_panel.house"
 
@@ -264,3 +267,69 @@ async def test_state_resent_when_node_comes_back_alive(
     await hass.async_block_till_done()
     assert len(set_value) == sent + 1
     assert set_value[-1].data["value"] == 2  # armed away shown again
+
+
+# ---- options, actions and diagnostics ---------------------------------------
+
+
+async def test_options_form_stores_the_none_sound_and_keeps_old_settings(
+    hass: HomeAssistant, keypad_device
+):
+    entry, _, _ = await _setup(hass, keypad_device, {OPT_TRIGGERED_SOUND: "-1"})
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] is FlowResultType.FORM
+    # an old stored -1 is shown as the "none" choice, so saving the form unchanged keeps it silent
+    key = next(k for k in result["data_schema"].schema if k == OPT_TRIGGERED_SOUND)
+    assert key.default() == "none"
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.options[OPT_TRIGGERED_SOUND] == "none"
+
+
+async def test_options_form_changes_the_triggered_sound(hass: HomeAssistant, keypad_device):
+    entry, set_value, _ = await _setup(hass, keypad_device)
+    hass.states.async_set(ALARM, "triggered")
+    await hass.async_block_till_done()
+    assert set_value[-1].data["value"] == 4  # warbling siren by default
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {OPT_TRIGGERED_SOUND: "20"}
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()
+    assert entry.runtime_data.options[OPT_TRIGGERED_SOUND] == "20"  # entry reloaded with it
+
+
+async def test_set_indicator_service_sends_the_value(hass: HomeAssistant, keypad_device):
+    entry, set_value, _ = await _setup(hass, keypad_device)
+    before = len(set_value)
+    await hass.services.async_call(
+        DOMAIN, "set_indicator", {"config_entry_id": entry.entry_id, "value": 23}, blocking=True
+    )
+    assert len(set_value) == before + 1 and set_value[-1].data["value"] == 23
+
+
+async def test_actions_refuse_an_unknown_entry(hass: HomeAssistant, keypad_device):
+    await _setup(hass, keypad_device)
+    with pytest.raises(ServiceValidationError):
+        await hass.services.async_call(
+            DOMAIN, "chime", {"config_entry_id": "nope"}, blocking=True
+        )
+
+
+async def test_diagnostics_leave_out_the_device_id_and_the_code(
+    hass: HomeAssistant, keypad_device
+):
+    entry, _, _ = await _setup(hass, keypad_device)
+    hass.bus.async_fire(  # a half-typed code is in the buffer
+        "zwave_js_notification",
+        {"device_id": keypad_device, "command_class": 111, "event_type": 2, "event_data": "1234"},
+    )
+    await hass.async_block_till_done()
+    report = await async_get_config_entry_diagnostics(hass, entry)
+    assert report["integration_version"]
+    assert report["entry"]["data"][CONF_KEYPAD_DEVICE] == "**REDACTED**"
+    assert report["alarm_panel"] == {"entity_id": ALARM, "state": "disarmed"}
+    assert report["keypad"]["zwave_devices_found"] == 1
+    text = str(report)
+    assert keypad_device not in text and "1234" not in text
